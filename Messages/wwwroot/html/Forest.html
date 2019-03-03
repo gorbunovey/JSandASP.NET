@@ -1,0 +1,197 @@
+﻿<html>
+<head>
+	<title>CanvasForest</title>
+	<link rel="icon" type="image/png" href="../images/favicon.png" />
+	<style>
+		.button {
+			border: 0;
+			border-radius: 8px;
+			color: white;
+			opacity: 0.7;
+			padding: 5px 8px;
+			text-align: center;
+			background-color: #f44;
+			transition-duration: 0.4s;
+			box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24),0 17px 50px 0 rgba(0,0,0,0.19);
+			text-decoration: none;
+			display: inline-block;
+			font-size: 1.1em;
+			margin: 2px 6px;
+			cursor: pointer;
+		}
+
+			.button:hover {
+				opacity: 1;
+				transform: scale(1.04);
+			}
+	</style>
+	<script src="../js/Kit.js"></script>
+	<script>
+		class Forest
+		{
+			constructor()
+			{
+				this.width = window.innerWidth - 120;
+				this.height = window.innerHeight;
+				this.clr = "#420";
+				let fade = 0.01;
+				this.white = `rgba(255,255,255,${fade})`;
+				this.black = `rgba(0,0,0,${fade})`;
+				this.bkClr = this.white;
+				this.delay = 60;
+				this.delta = 10;
+				this.steady = true;
+				this.busy = false;
+				let
+					w = this.width, x = this.width + 10,
+					canvas = $("canvas", 0, `width=${w};height=${this.height}`),
+					bStart = $("button", `position=absolute;left=${x}`, "id=start;innerText=Start;className=button;"),
+					bDay = $("button", `position=absolute;left=${x};top=45px;background=#6a6`,
+						"innerText=Night;className=button;"),
+					bSteady = $("button", `position=absolute;left=${x};top=85px;background=#6ad`,
+						"id=steady;innerText=Steady;className=button;"),
+					bMore = $("button", `position=absolute;left=${x};top=125px;background=#6ad`,
+						"innerText=More;className=button;"),
+					bLess = $("button", `position=absolute;left=${x};top=165px;background=#6ad`,
+						"innerText=Less;className=button;"),
+					sDelay = $("span", `position=absolute;left=${x};top=205px;margin=10px;`,
+						`innerText=${this.delay} ms`);
+				this.dc = canvas.getContext("2d");
+				this.Init();
+				bStart.onclick = () => this.OnStart();
+				bDay.onclick = (e) => this.OnToggleDay(e);
+				bMore.onclick = () => this.OnMore();
+				bLess.onclick = () => this.OnLess();
+				bSteady.onclick = () => this.OnSteady();
+			}
+			Init()
+			{
+				this.dc.fillStyle = "#222";
+				this.dc.fillRect(0, 0, this.width, this.height);
+				this.dc.fill();
+			}
+			Tree(x, y, dx, dy, w, rate, t)
+			{
+				// This algorithm belongs to Alejandro U. Alvarez https://github.com/aurbano/TreeGenerator/tree/master/src
+				// I have slightly modified it
+				let
+					dc = this.dc,
+					widthLoss = 0.03,// Width loss
+					branchLoss = 0.8,// % width maintained for branches
+					speed = 0.3,// Movement speed
+					newBranch = 0.8,// Chance of not starting a new branch
+					h = this.height,
+					clr = this.clr,
+					steady = this.steady;// Steady growth or fast
+				Recurse(x, y, dx, dy, w, rate, t);
+
+				function Recurse(x, y, dx, dy, w, rate, t)  // Recursive tree generation
+				{
+					dc.lineWidth = w - t * widthLoss;
+					dc.beginPath();
+					dc.moveTo(x, y);
+					if (steady)
+						rate *= 0.5;
+					x += dx;
+					y += dy;
+					dx += speed * Math.sin(Math.random() + t);
+					dy += speed * Math.cos(Math.random() + t);
+					if (w < 6 && y > h - Math.random() * 0.3 * h) // Check if branches are getting too low
+						w *= 0.8;
+					dc.strokeStyle = clr; // Draw the next segment of the branch
+					dc.lineTo(x, y);
+					dc.stroke();
+					// Generate new branches. Thet should spawn after a certain time, depending on the width
+					if (t > 5 * w + Math.random() * 100 && Math.random() > newBranch)
+					{
+						setTimeout(() =>
+						{
+							Recurse(x, y, 2 * Math.sin(Math.random() + t), 2 * Math.cos(Math.random() + t),
+								(w - t * widthLoss) * branchLoss, rate + Math.random() * 100, 0);
+							w *= 0.8;   // When branching, loose a bit of width
+						}, 10 + 2 * rate * Math.random());
+					}
+					if (w - t * widthLoss >= 1) // Continue the branch
+						setTimeout(() => Recurse(x, y, dx, dy, w, rate, ++t), rate);
+				}
+			}
+
+			OnToggleDay(e)
+			{
+				if (this.bkClr === this.white)
+				{
+					e.target.innerText = "Day";
+					this.clr = "#eef";
+					this.dc.fillStyle = "#aaa";
+					this.bkClr = this.black;
+				}
+				else
+				{
+					e.target.innerText = "Night";
+					this.clr = "#420";
+					this.dc.fillStyle = "#222";
+					this.bkClr = this.white;
+				}
+				this.ChangeFading();
+			}
+			Start()
+			{
+				this.timerTree = setInterval(() => this.Tree(rnd(this.width), this.height, 0,
+					-rnd(3), rnd(10), 30, 0), this.delay);
+				this.ChangeFading();
+				O.query("#start").innerText = "Stop";
+				function rnd(x) { return Math.random() * x; }
+			}
+			OnStart()
+			{
+				clearInterval(this.timerTree);
+				clearInterval(this.timerFade);
+				let btn = O.query("#start");
+				this.busy = !this.busy;
+				if (!this.busy)
+					btn.innerText = "Start";
+				else
+				{
+					btn.innerText = "Stop";
+					this.Start();
+				}
+			}
+			ChangeFading()
+			{
+				clearInterval(this.timerFade);
+				this.timerFade = setInterval(() =>
+				{
+					this.dc.fillStyle = this.bkClr;
+					this.dc.fillRect(0, 0, this.width, this.height);
+					this.dc.fill();
+				}, 100);
+			}
+			OnSteady()
+			{
+				this.steady = !this.steady;
+				O.query("#steady").innerText = this.steady ? "Steady" : "Quick";
+			}
+			OnMore()
+			{
+				if (this.delay > 20)
+					this.delay -= 10;
+				clearInterval(this.timerTree);
+				this.Start();
+				O.query("span").innerText = `${this.delay} ms`
+			}
+			OnLess()
+			{
+				if (this.delay < 200)
+					this.delay += 10;
+				clearInterval(this.timerTree);
+				this.Start();
+				O.query("span").innerText = `${this.delay} ms`
+			}
+		}
+		onload = () => new Forest();
+
+	</script>
+</head>
+<body>
+</body>
+</html>

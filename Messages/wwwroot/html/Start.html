@@ -1,0 +1,74 @@
+﻿<html>
+<head>
+	<title>Start</title>
+	<link rel="icon" type="image/png" href="../images/favicon.png" />
+	<style>
+		div {
+			border: 3px solid #3a8;
+		}
+
+		h1 {
+			color: #ffc;
+			background-color: #900;
+			font-size: 1.6em;
+			margin: 0;
+			margin-bottom: 0.5em;
+			padding: 0.25em;
+			text-align: center;
+			letter-spacing: 0.08em;
+			border-bottom-style: solid;
+			border-bottom-width: 0.2em;
+			border-bottom-color: #c00;
+		}
+
+		body {
+			font-family: Trebuchet MS;
+			font-size: 80%;
+			padding: 0px 10px;
+		}
+	</style>
+	<script>
+		function Init() {
+			let pic = document.querySelector("#pic");
+			let s = pic.style;
+			s.width = "200px";
+			s.position = "absolute";
+			s.left = "0px";
+			s.top = "50px";
+
+			document.body.onkeydown = function (e) // Анонимная функция (вся, вместе с потрохами, но без имени)
+			{
+				e.preventDefault();
+				switch (e.keyCode) {
+					case 37: Move(-2, 0); break;
+					case 38: Move(0, -2); break;
+					case 39: Move(2, 0); break;
+					case 40: Move(0, 2); break;
+				}
+			}
+			function Move(dx, dy) {
+				pic.style.left = (parseInt(pic.style.left) + dx) + "px";
+				pic.style.top = (parseInt(pic.style.top) + dy) + "px";
+				let div = document.querySelector("#div");
+				div.innerText = `x = ${pic.style.left}, y = ${pic.style.top}`;
+			}
+
+			let x = 0, y = 0;
+			pic.ondragstart = (e) => { x = e.x; y = e.y; }
+			div.ondragover = (e) => { e.preventDefault(); }
+			div.ondrop = (e) => { e.preventDefault(); Move(e.x - x, e.y - y); }
+		}
+		onload = Init;
+	</script>
+
+</head>
+
+<body>
+
+	<h1>Введение в технологию HTML</h1>
+	<div id="div" style="background:#ffe; text-align:center; width:1000px; height: 700px;">
+	</div>
+	<img id="pic" src="../images/USSR.png" />
+
+</body>
+</html>

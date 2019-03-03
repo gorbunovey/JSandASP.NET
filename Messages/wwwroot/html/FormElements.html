@@ -1,0 +1,238 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<title>FormElements</title>
+	<link rel="icon" type="image/png" href="../images/favicon.png" />
+	<style>
+		body {
+			font-family: Trebuchet MS;
+			font-size: 80%;
+			padding: 0px 10px;
+		}
+
+		h1 {
+			color: #ffc;
+			background-color: #900;
+			font-size: 1.6em;
+			margin: 0;
+			margin-bottom: 0.5em;
+			padding: 0.25em;
+			text-align: center;
+			letter-spacing: 0.08em;
+			border-bottom-style: solid;
+			border-bottom-width: 0.2em;
+			border-bottom-color: #c00;
+		}
+
+		fieldset {
+			width: 22em;
+		}
+
+		label, meter, progress, fieldset, input {
+			margin: 4px;
+		}
+
+			input[type=file] {
+				display: none;
+			}
+
+			input[type=range], progress, meter {
+				width: 75px;
+				vertical-align: middle;
+			}
+
+			input:invalid {
+				box-shadow: 0 0 5px 1px red;
+			}
+
+			input:focus:invalid {
+				outline: none;
+			}
+
+		.w80 {
+			display: inline-block;
+			width: 80px;
+		}
+
+		.aside {
+			display: inline;
+			position: absolute;
+			left: 30em;
+			top: 54px;
+		}
+
+		.green {
+			font-family: Comic Sans MS;
+			color: green;
+		}
+
+		.red {
+			background-color: #b00 !important;
+		}
+
+		.button {
+			border: 0;
+			border-radius: 4px;
+			color: white;
+			opacity: 0.7;
+			padding: 3px 5px;
+			text-align: center;
+			background-color: #282;
+			transition-duration: 0.4s;
+			box-shadow: 0 2px 6px 0 rgba(0,0,0,0.24),0 7px 10px 0 rgba(0,0,0,0.19);
+			text-decoration: none;
+			display: inline-block;
+			font-size: 0.9em;
+			cursor: pointer;
+			margin: 4px;
+		}
+
+			.button:hover {
+				opacity: 1;
+				transform: scale(1.04);
+			}
+
+			.button[disabled] {
+				background-color: #ddd;
+			}
+
+		.close {
+			float: right;
+			font-size: 10px;
+			font-weight: bold;
+			line-height: 1;
+			color: #000;
+			text-shadow: 0 1px 0 #fff;
+			opacity: .6;
+			position: relative;
+			top: -8px;
+		}
+
+		.alert {
+			padding: 8px 0px 8px 8px;
+			margin-bottom: 20px;
+			border: 2px solid #ecc;
+			border-radius: 4px;
+			width: 20em;
+		}
+
+		#img {
+			width: 3em;
+			display: inline;
+			vertical-align: middle;
+		}
+	</style>
+	<script>
+
+		function Init()
+		{
+			let state = 0, timer = null;
+			sr.textContent = range.value;
+			sm.textContent = meter.value;
+			sp.textContent = progress.value;
+			color.value = "#000000";
+			sc.textContent = color.value;
+			range.oninput = () =>
+			{
+				sr.textContent = range.value;
+				meter.value = 10 + 9 * range.value;
+				sm.textContent = meter.value;
+				let v = parseInt(range.value * 1.5).toString(16);
+				color.value = `#00${v}${v}00`;
+				sc.textContent = color.value;
+				if ((state = state == 0 ? 1 : 2) == 1)
+				{
+					timer = setInterval(() =>
+					{
+						progress.value++;
+						sp.textContent = progress.value;
+						if (progress.value > 99)
+						{
+							clearInterval(timer);
+							sp.textContent = (progress.value = 0);
+							state = 0;
+						}
+					}, 30);
+				}
+			}
+			file.onchange = () =>
+			{
+				let f = file.files[0].name;
+				sf.textContent = f;
+				img.src = `../images/${f}`;
+			}
+			color.onchange = () => sc.textContent = color.value;
+			reset.onclick = () =>
+			{
+				sc.textContent = color.value = "#000000";
+			};
+			btnClose.onclick = () => divMsg.style.display = "none";
+		}
+		onload = Init;
+	</script>
+</head>
+<body>
+	<h1>Form Elements</h1>
+	<div id="divMsg" class="alert">
+		<button type="button" id="btnClose" class="close" value="Close">&times;</button>
+		<span id="msg" class="green">Please, fill in this form</span>
+	</div>
+	<form id="f" action="SplitQuery.html">
+		<div>
+			<span class="w80" title="This is a 'must' field">Language:*</span> <input list="lang" name="lang" required autofocus maxlength="15" placeholder="Start typing (c, p or c)...">
+			<datalist id="lang">
+				<option>C++</option>
+				<option>C#</option>
+				<option>Caml</option>
+				<option>Pascal</option>
+				<option>Python</option>
+				<option>Perl</option>
+				<option>Ruby</option>
+				<option>R++</option>
+			</datalist><br>
+			<span class="w80">Experience:</span> <input type="number" name="ex" id="ex" min="2" max="30" requried step="2"><br>
+			<span class="w80" title="You must set the time">Set Time:*</span><input type="time" name="time" id="time" required>
+			<fieldset>
+				<legend>What is your favorite language?</legend>
+				<input type="radio" name="lg" value="C++" checked> C++<br>
+				<input type="radio" name="lg" value="Python"> Python<br>
+				<input type="radio" name="lg" value="C#"> C#
+			</fieldset>
+			<fieldset>
+				<legend>Select server technologies?</legend>
+				<input type="checkbox" checked name="ch" value="ASP.NET MVC">ASP.NET MVC<br>
+				<input type="checkbox" name="ch" value="Django">Django (Python)<br>
+				<input type="checkbox" name="ch" value="Rails">Ruby on Rails
+			</fieldset>
+		</div>
+		<div class="aside">
+			<span class="w80">Set Date:</span><input type="datetime-local" name="dt" id="dt"><br>
+			<span class="w80">Set Month:</span><input type="month" name="month" id="month"><br>
+			<span class="w80">Set Week:</span><input type="week" name="week" id="week"><br>
+			<fieldset>
+				<legend>Advanced Widgets</legend>
+				<span class="w80">Site Rating:</span><input type="range" name="range" id="range" min="0" max="10" step="1" value="0">
+				<span id="sr"></span><br>
+				<span class="w80">Disk usage:</span><meter id="meter" min="0" max="100" value="10" low="60" high="80" optimum="50">0</meter>
+				<span id="sm"></span><br>
+				<span class="w80">Progress:</span><progress max="100" value="0" id="progress"></progress>
+				<span id="sp"></span><br>
+				<span class="w80">Color:</span><input type="color" name="color" id="color">
+				<span id="sc"></span><br>
+				<label>Image: <mark id="sf">Browse</mark><input type="file" name="file" id="file" ac-cept="image/*" multiple></label>
+				<img id="img"><br>
+			</fieldset>
+			<fieldset>
+				<legend>DIY<abbr title="Do-it-yourself">*</abbr></legend>
+				<input type="radio" required name="title" id="r1" value="Mr"> Mr.
+				<input type="radio" required name="title" id="r2" value="Ms"> Ms.
+			</fieldset>
+		</div>
+
+		<button type="reset" class="red button" id="reset">
+			This a <br><strong>'Reset' button</strong>
+		</button><br>
+		<input type="submit" value="Submit" class="button">
+	</form>
+</body>
+</html>

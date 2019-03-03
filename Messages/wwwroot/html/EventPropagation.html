@@ -1,0 +1,106 @@
+﻿<html>
+<head>
+	<title>EventPropagation</title>
+	<link rel="icon" type="image/png" href="../images/favicon.png" />
+	<style>
+		body {
+			font-family: Trebuchet MS;
+		}
+
+		h1 {
+			color: #ffc;
+			background: #900;
+			font-size: 1.6em;
+			margin: 0;
+			margin-bottom: 0.5em;
+			padding: 0.25em;
+			text-align: center;
+			letter-spacing: 0.08em;
+			border-bottom-style: solid;
+			border-bottom-width: 0.2em;
+			border-bottom-color: #c00;
+		}
+	</style>
+	<script src="../js/Kit.js"></script>
+	<script>
+		class EventPropagation
+		{
+			constructor()
+			{
+				$("h1", 0, "innerText=Event Bubbling and capturing;");
+				O.addText("Click any panel and analyse event route");
+				let div = $("div", "background=#eee;border=1px solid #aaa;margin=10px 0px;padding=20px;");
+				O.html("Bubbling: ");
+				this.chBubble = $("input", 0, "type=checkbox;");
+				let bInfo = $("span", 0, "innerText=Off;");
+				O.html("<br/>Capturing:");
+				this.chTunnel = $("input", 0, "type=checkbox;");
+				let cInfo = $("span", 0, "innerText=Off;");
+				O.html("<br/>Route:");
+				this.divResult = $("span", "margin-left=30px;");
+				O.html("<pre>c: capturing;  t: target;  b: bubbling;</pre>", $("div", "margin=4px;"));
+
+				this.divs = [];
+				for (let i = 1, d = div, dn; i < 6; i++ , d = dn)
+				{
+					let s = "margin-bottom=15px;padding=4px;border=1px solid #000;background=#";
+					s += (i & 1) === 1 ? "ffc" : "cfc";
+					dn = $("div", s, `id=${i};innerText=${i};`, d);
+					this.divs.push(dn);
+				}
+				this.AddListeners();
+				div.addEventListener('click', this.Reset, true);
+				this.chBubble.onclick = () => bInfo.innerText = (this.chBubble.checked ? "On" : "Off");
+				this.chTunnel.onclick = () =>
+				{
+					cInfo.innerText = (this.chTunnel.checked ? "On" : "Off");
+					this.RemoveListeners();
+					this.AddListeners();
+				}
+			}
+			AddListeners()
+			{
+				for (var i = 0; i < this.divs.length; i++)
+				{
+					this.divs[i].addEventListener("click", this.OnDivClick, false);
+					if (this.chTunnel.checked)
+						this.divs[i].addEventListener("click", this.OnDivClick, true);
+				}
+			}
+			RemoveListeners()
+			{
+				for (var i = 0; i < this.divs.length; i++)
+				{
+					this.divs[i].removeEventListener("click", this.OnDivClick, false);
+					this.divs[i].removeEventListener("click", this.OnDivClick, true);
+				}
+			}
+			OnDivClick(e)
+			{
+				if (e.eventPhase == 2)
+				{
+					e.currentTarget.style.backgroundColor = "red";
+					if (!glob.chBubble.checked)
+						e.stopPropagation();
+				}
+				let
+					p = e.eventPhase,
+					s = p == 1 ? "c" : p == 2 ? "t" : "b",
+					txt = glob.divResult.innerHTML,
+					t = txt !== "" ? "&#x21fe;" : "";
+				glob.divResult.innerHTML += t + s + e.currentTarget.id;
+			}
+			Reset(e)
+			{
+				for (var i = 0; i < glob.divs.length; i++)
+					glob.divs[i].style.backgroundColor = (i & 1) === 0 ? "#ffc" : "#cfc";
+				glob.divResult.innerHTML = "";
+			}
+		}
+		var glob = null;
+		onload = () => glob = new EventPropagation();
+	</script>
+</head>
+<body>
+</body>
+</html>

@@ -1,0 +1,165 @@
+﻿<html>
+<head>
+	<title>Zoo</title>
+	<link rel="icon" type="image/png" href="../images/favicon.png" />
+	<link href="../css/Styles.css" rel="stylesheet" />
+	<script src="../js/Kit.js"></script>
+	<script>
+		class Panel
+		{
+			constructor()
+			{
+				this.player = $("audio", "visibility=hidden;", "id=player;");
+				this.div = $("div", "background-color=#ffe; border=1px solid #bbb;"
+					+ "width=400px;height=300px;left=20px;top=20px;");
+				this.msg = $("span", "font-size=1.2em;color=blue;position=absolute;top=278px;left=120px;"
+					+ "padding-left=10px;padding-top=10px;", 0, this.div);
+				this.animal = null;
+				this.pop = null;
+				$("span", "font-size=18pt;color=red;padding-left=10px;padding-top=10px;",
+					"innerText=My Zoo (click, drag, press space);", this.div);
+			}
+			Say(file) { this.player.src = file; this.player.play(); }
+
+			RemovePopup()
+			{
+				if (this.pop)
+				{
+					this.pop.parentNode.removeChild(this.pop);
+					this.pop = null;
+				}
+			}
+			Popup(name, style)
+			{
+				this.RemovePopup();
+				let
+					x = parseInt(style.left),
+					y = parseInt(style.top) + 82,
+					s = `padding=6px;border=4px solid #aa3;backgroundColor=#ffa;fontFamily=Trebuchet MS;
+							textAlign=center;position=absolute;
+							top=${y}px;left=${x}px;width=77px;`;
+				this.pop = $("span", s, `innerText=I am ${name}`, this.div);
+			}
+		}
+
+		class Animal
+		{
+			constructor(name, x, y)
+			{
+				this.name = name;
+				this.x = x;
+				this.y = y;
+				this.imgSrc = "";
+				this.sndSrc = "";
+				this.img = null;
+			}
+
+			Set(panel, name)
+			{
+				this.panel = panel;
+				this.imgSrc = `../images/${name}.jpg`;
+				this.sndSrc = `../sounds/${name}.mp3`;
+				if (panel)
+					this.Create();
+			}
+			Speak()
+			{
+				this.panel.Say(this.sndSrc);
+				this.panel.Popup(this.name, this.img.style);
+			}
+			Create()
+			{
+				let
+					panel = this.panel,
+					style = `position=absolute;width=90px;height=80px;left=${this.x}px;top=${this.y}px;`;
+				this.img = $("img", style, `src=${this.imgSrc}`, panel.div);
+				this.img.onmousedown = (e) =>
+				{
+					let animal = panel.animal;
+					if (animal && animal !== this)
+					{
+						panel.RemovePopup();
+						panel.player.pause();
+						animal.img.style.border = "none";
+					}
+					e.preventDefault();
+					e.target.xOld = Math.round(e.x);
+					e.target.yOld = Math.round(e.y);
+					e.target.style.border = "solid red 2px";
+					panel.animal = this;
+					panel.msg.innerText = `My name is ${this.name}`;
+					if (e.ctrlKey)
+						this.Speak();
+				}
+				window.onkeydown = (e) =>
+				{
+					if (e.key === 'Enter' || e.key === ' ')
+					{
+						panel.RemovePopup();
+						panel.animal.Speak();
+					}
+				}
+				this.img.onmousemove = (e) =>
+				{
+					if (!e.target.xOld)
+						return;
+					panel.RemovePopup();
+					let
+						o = e.target,
+						s = o.style,
+						x = Math.round(e.x),
+						y = Math.round(e.y);
+					s.left = (parseInt(s.left) + x - o.xOld) + "px";
+					s.top = (parseInt(s.top) + y - o.yOld) + "px";
+					o.xOld = x;
+					o.yOld = y;
+				}
+				this.img.onmouseup = (e) => e.target.xOld = null;
+				this.img.onmouseout = (e) => e.target.xOld = null;
+			}
+		}
+
+		class Lion extends Animal
+		{
+			constructor(name, x, y, panel)
+			{
+				super(name, x, y);
+				super.Set(panel, "Lion");
+			}
+		}
+
+		class Cougar extends Animal
+		{
+			constructor(name, x, y, panel)
+			{
+				super(name, x, y);
+				super.Set(panel, "Cougar");
+			}
+		}
+
+		class Elephant extends Animal
+		{
+			constructor(name, x, y, panel)
+			{
+				super(name, x, y);
+				super.Set(panel, "Elephant");
+			}
+		}
+
+		class Game
+		{
+			constructor()
+			{
+				let panel = new Panel();
+				new Lion("Leo", 20, 120, panel);
+				new Cougar("Megera", 120, 120, panel);
+				new Elephant("Dolly", 220, 120, panel);
+			}
+		}
+
+		onload = () => new Game();
+	</script>
+</head>
+<body>
+</body>
+</html>

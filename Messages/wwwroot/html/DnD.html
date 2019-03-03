@@ -1,0 +1,104 @@
+﻿<html>
+<head>
+	<title>DnD</title>
+	<link rel="icon" type="image/png" href="../images/favicon.png" />
+	<style>
+		[draggable] {
+			user-select: none;
+		}
+
+		.column {
+			height: 400px;
+			width: 200px;
+			float: left;
+			border: 2px solid #666;
+			background: #ccc;
+			margin-right: 8px;
+			text-align: center;
+			cursor: move;
+			border-radius: 10px;
+			box-shadow: inset -2px -2px 3px #000;
+		}
+
+			.column header {
+				padding: 8px;
+				font-size: 8em;
+				color: #fff;
+				text-shadow: #99f 4px 4px;
+				background: linear-gradient(90deg, #aaf 0%, #558 80%);
+			}
+
+			.column.over {
+				border: 2px dashed #f00;
+			}
+
+		.moving {
+			opacity: 0.4;
+			transform: scale(0.95);
+		}
+	</style>
+	<script src="../js/Kit.js"></script>
+	<script>
+		class DnD
+		{
+			constructor()
+			{
+				let div = $("div", 0, "id=columns;");
+				for (let i = 65; i < 68; i++)
+				{
+					let d = $("div", 0, "draggable=true;className=column;", div);
+					$("header", 0, "innerText=" + String.fromCharCode(i), d);
+				}
+				this.SetHandlers();
+				this.dragged = null;
+			}
+			SetHandlers()
+			{
+				let cols = document.querySelectorAll("#columns .column");
+				for (let i = 0; i < cols.length; i++)
+				{
+					let c = cols[i];
+					c.ondragstart = (e) =>
+					{
+						let d = e.target;
+						d.classList.add("moving");
+						this.dragged = d;
+						e.dataTransfer.effectAllowed = "move";
+						e.dataTransfer.setData("text", d.innerHTML);
+					}
+					c.ondragenter = (e) => e.target.classList.add("over");
+					c.ondragleave = (e) => e.target.classList.remove("over");
+					c.ondragover = (e) =>
+					{
+						e.preventDefault();
+						e.dataTransfer.dropEffect = e.target.classList.contains("column") ? "move" : "none";
+						return false;
+					}
+					c.ondragend = () =>
+					{
+						for (let i = 0; i < cols.length; i++)
+						{
+							cols[i].classList.remove("over");
+							cols[i].classList.remove("moving");
+						}
+					}
+					c.ondrop = (e) =>
+					{
+						e.preventDefault();
+						e.stopPropagation();
+						let d = e.target;
+						if (d.classList.contains("column") && this.dragged !== d)
+						{
+							this.dragged.innerHTML = d.innerHTML;
+							d.innerHTML = e.dataTransfer.getData("text");
+						}
+					}
+				}
+			}
+		}
+		onload = () => new DnD();
+	</script>
+</head>
+<body>
+</body>
+</html>

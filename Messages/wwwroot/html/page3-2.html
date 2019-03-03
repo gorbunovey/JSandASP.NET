@@ -1,0 +1,31 @@
+﻿<html>
+<head>
+	<meta charset="utf-8" />
+	<title></title>
+	<link href="../css/Styles.css" rel="stylesheet" />
+	<script src="../js/Kit.js"></script>
+	<script>
+		function Init() {
+			let
+				div = $("div", "background=#ffe;border=1px solid #aaa;padding=6px;margin=4px;"),
+				v = "12" * "24",
+				sp = $("span", 0, `innerHTML=${v}`, div);
+			sp.innerHTML += "<br>N-ричные системы исчисления</br>";
+			for (let i = 1; i < 21; i++) {
+				let s = String.fromCharCode(i + 96);
+				sp.innerHTML += `${s}&#8594; ${parseInt(s, 29)},&nbsp;&nbsp;`;
+				if (i % 5 == 0)
+					sp.innerHTML += "<br>";
+			}
+			sp.innerHTML += `<br>0xaf &#8594; ${parseInt('af', 16)},&nbsp;&nbsp;`;
+
+		}
+		onload = Init;
+
+
+	</script>
+</head>
+<body>
+
+</body>
+</html>

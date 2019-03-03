@@ -1,0 +1,92 @@
+﻿<html>
+<head>
+	<meta charset="utf-8" />
+	<title></title>
+	<script src="../js/Kit.js"></script>
+	<script>	
+		var man = // Свойства объекта (или поля) вложены в блок {    }
+		{
+			name: "Peter Norton", // Свойству  "name" соответствует строка текста. Его value (значение) — "Peter Norton"
+			resident: true, // Свойству  "resident" сопоставлено значение true типа Boolean
+			// Свойству  "Show" сопоставлена функция (всегда ссылочный тип). Такое свойство принято называть методом.
+			Show: function () { return this.name + (this.resident ? " is " : " is not ") + "resident" }
+		};
+
+		var o = man.name; //  "Peter Norton"
+		o = man["name"];	//  "Peter Norton". Это равносильный способ получения значения свойства.
+		o = man.resident; //  true
+		o = man["resident"]; //  true
+		o = man.Show; // function () { return this.name + (this.resident ? " is " : " is not ") + "resident" }.  Метод, как член объекта man
+		o = man["Show"]; // Тот же результат.
+		o = man.Show(); // "Peter Norton is resident". Строка текста — результат вызова метода.
+		man.wife = "Gloria"; // Создаем и добавляем новое свойство в объект man.
+		o = man.house; //  undefined. Такого свойства нет.
+		man.house = {}; // Добавили новое свойство.
+		o = man.house; // house – это пустой объект {...}, не имеющий свойств
+		o["bank account"] = 1005438; // Ключ свойства имеет пробел. Такое свойство нельзя задать в точечной нотации.
+		var t = typeof o["bank account"]; // number
+		o["0.45"] = "available"; // Свойство имеет необычный ключ "0.45". Такое свойство нельзя задать в точечной нотации.
+		t = typeof o["0.45"]; // string
+		o["typeof"] = Date(); // Свойство имеет необычный ключ "typeof". Такое свойство нельзя задать в точечной нотации.
+		t = typeof o["typeof"]; // string. Результат вызова конструктора Date имеет тип string.
+		var o = new Date();
+		t = typeof o; // "object". Операция new создает объект типа Date, а вызов конструктора (без операции new) создает объект типа String.
+
+		o = typeof "Hi";  // "string". Primitive value (литерал)
+		o = typeof new String("Hi"); // "object". Reference type.
+		o = typeof String("Hi"); // "string". Primitive value (литерал). Эту трактовку собираются убрать в Strict-версии JavaScript.
+		o = "Word".substr(-2); // "rd" – подстрока, выделенная, начиная со второго символа от конца строки
+		o = "test"; // Литерал
+		o.size = 4; // Устанавливаем свойство
+		t = o.size; // undefined, так как погиб временный объект String
+		o = new String("test");
+		o.size = 20; // Устанавливаем свойство
+		t = o.size; // 20, так как объект String жив
+
+		if (typeof x === "undefined") // Убедись, что x не существует
+			alert("x is undefined");
+		var x;
+		if (!x) // Эквивалент if (x === null)
+			alert("x is null");
+		if (o !== undefined && o !== null) // Убедись, что o существует, затем убедись, что у него есть значение
+			alert(o);
+		if (o) // Эквивалент предыдущему оператору, но более лаконичный
+			alert(o);
+
+		o = 2 == '2'; // true. Сравниваются значения литералов разных типов. Приведение типов производится автоматически (Coercion).
+		o = 2 === '2';  // false. Значение типа number сравнивается со значением типа string. (Strict Equality — проверка на строгое равенство). 
+		o = '\n\t123\r ' == 123;  // true. Сначала строка преобразуется в число 123, затем происходит нестрогое (sloppy) сравнение.
+		o = 5 + null; // 5
+		o = 5 + true; // 6. Сначала true преобразуется  в 1, затем происходит сложение чисел.
+		o = 5 + undefined; // NaN (Not A Number)
+		o = [1, 2] + [3]; // "1,23". Сначала [1, 2] преобразуется с помощью toString() в "1,2", затем происходит конкатенация строк текста.
+		o = "Hot" && "Wet";  // "Wet". Так как "Hot" !== false
+		o = "Hot" || "Wet";  // "Hot". "Wet" не анализируется.
+		o = false && "Wet";  // false. "Wet" не анализируется.
+		o = "" && "Wet";  // "". Так как "" == false. "Wet" не анализируется.
+		o = "" || "Wet";  // "Wet". Так как "" == false.
+		o = Boolean(undefined); // false
+		o = Boolean(null); // false
+		o = Boolean(new Boolean(false)); // true. Все объекты при приведении к Boolean дают true
+		o = Boolean(Boolean(false)); // false. Так как преобразуется примитив, а не объект
+		//if (!foo) // Этому условию удовлетволят такие (falsy values): false, 0, "", null, undefined, NaN
+			//console.log("falsy values are: false, 0, "", null, undefined, NaN");
+
+		o = 8 * null;  	// 0
+		o = "5" - 1;		// 4
+		o = "5" + 1;		// 51
+		o = "five" * 2;	// NaN
+		o = false == 0;	// true
+
+		O = null == undefined;	// true
+		O = null == 0;	
+
+		o = null || "user";	// → user
+		o = "Ann" || "user";	// → Ann
+
+</script>
+</head>
+<body>
+
+</body>
+</html>

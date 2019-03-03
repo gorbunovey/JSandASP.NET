@@ -1,0 +1,151 @@
+﻿<html>
+<head>
+	<title>Snake</title>
+	<link rel="icon" type="image/png" href="../images/favicon.png" />
+	<script src="../js/Kit.js"></script>
+	<script>
+		class Cell
+		{
+			constructor(x, y, food = false)
+			{
+				this.x = x;
+				this.y = y;
+				this.isFood = food;
+			}
+			Draw(dc)
+			{
+				dc.fillStyle = this.isFood ? "#f00" : "#2c2";
+				let
+					sz = Game.cellSize,
+					lt = this.x * sz,
+					tp = this.y * sz;
+				dc.fillRect(lt, tp, sz, sz);
+				dc.strokeStyle = "white";
+				dc.strokeRect(lt, tp, sz, sz);
+			}
+		}
+
+		class Snake
+		{
+			constructor()
+			{
+				this.body = [new Cell(1, 0), new Cell(0, 0)];
+			}
+			Draw(dc)
+			{
+				for (let i = 0; i < this.body.length; i++)
+					this.body[i].Draw(dc);
+			}
+		}
+
+		class Game
+		{
+			constructor()
+			{
+				window.onkeydown = (e) => this.Go(e);
+				this.dir = "rt";
+				this.interval = 200;
+				this.size = 25;
+				this.saveMe = true;
+				let sz = this.size * Game.cellSize;
+				this.dc = $("canvas", "border=1px solid black;", `width=${sz};height=${sz}`).getContext("2d");
+				let cb = $("input", 0, "type=checkbox;checked=1;", 0, 1);
+				cb.onchange = () => this.saveMe = !this.saveMe;
+				O.addText("Save Me");
+				this.Reset();
+			}
+			static get cellSize() { return 15; }
+			Reset()
+			{
+				if (this.timer)
+					clearInterval(this.timer);
+				this.snake = new Snake();
+				this.SetFood();
+				this.dir = "rt";
+				this.timer = setInterval(this.Draw, this.interval, this);
+			}
+			SetFood()
+			{
+				let x, y;
+				for (let ok = false; !ok;)
+				{
+					let max = this.size - 1;
+					x = Math.round(Math.random() * max);
+					y = Math.round(Math.random() * max);
+					ok = true;
+					let b = this.snake.body;
+					for (let i = 0; ok && i < b.length; i++)
+						ok = b[i].x != x || b[i].y != y;
+				}
+				this.food = new Cell(x, y, true);
+			}
+			Draw(g) // g — Game object
+			{
+				let
+					dc = g.dc,
+					sz = g.size * Game.cellSize,
+					body = g.snake.body,
+					dir = g.dir;
+				dc.fillStyle = "#222";
+				dc.fillRect(0, 0, sz, sz);
+
+				let x = body[0].x, y = body[0].y;
+				dir == "rt" ? x++ :
+					dir == "lt" ? x-- :
+						dir == "up" ? y-- :
+							dir == "dn" ? y++ : 0;
+
+				if (x == -1 || x == g.size || y == -1 || y == g.size || !g.saveMe && g.Self(x, y))
+				{
+					g.Reset();
+					return;
+				}
+				let c = null;
+				if (x == g.food.x && y == g.food.y)
+				{
+					c = new Cell(x, y); // New head cell will be inserted at the beginning
+					g.SetFood();
+				}
+				else
+				{
+					c = body.pop(); // Last cell will be inserted at the beginning
+					c.x = x;
+					c.y = y;
+				}
+				body.unshift(c); // Insert at the beginning
+
+				g.snake.Draw(dc);
+				g.food.Draw(dc);
+				dc.font = "16px Trebushet MS";
+				dc.fillStyle = "#eee";
+				dc.fillText("Score: " + (body.length - 2), 5, sz - 10);
+			}
+			Go(e)
+			{
+				let
+					key = e.which,
+					dir = this.dir;
+				this.dir =
+					key == 37 && dir != "rt" ? "lt" :
+						key == 38 && dir != "dn" ? "up" :
+							key == 39 && dir != "lt" ? "rt" :
+								key == 40 && dir != "up" ? "dn" : dir;
+			}
+			Self(x, y)
+			{
+				let b = this.snake.body;
+				for (let i = 0; i < b.length; i++)
+				{
+					if (y == b[i].y && x == b[i].x)
+						return b[i];
+				}
+				return null;
+			}
+		}
+
+		onload = () => new Game();
+	</script>
+</head>
+<body>
+</body>
+</html>

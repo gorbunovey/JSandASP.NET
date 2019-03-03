@@ -1,0 +1,526 @@
+﻿<html>
+<head>
+	<title>Chess</title>
+	<link rel="icon" type="image/png" href="../images/favicon.png" />
+	<link href="../css/Styles.css" rel="stylesheet" />
+	<script src="../js/Kit.js"></script>
+	<script>
+		(function ()
+		{
+			class Cell
+			{
+				constructor(x, y, size, clr)
+				{
+					this.x = x;
+					this.y = y;
+					this.size = size;
+					this.clr = clr;
+					this.figure = null;
+					this.marked = false;
+					this.selected = false;
+				}
+				Clear(dc)
+				{
+					this.figure = null;
+					this.marked = false;
+					this.selected = false;
+				}
+				Mark(dc)
+				{
+					this.marked = true;
+					this.Draw(dc);
+				}
+				Select(dc)
+				{
+					this.selected = true;
+					this.Draw(dc);
+				}
+				Draw(dc)
+				{
+					let
+						x = this.x * this.size + board.pad,
+						y = this.y * this.size;
+					dc.fillStyle = this.selected ? board.clrS : this.marked ? board.clrM : this.clr;
+					dc.fillRect(x, y, this.size, this.size);
+					dc.strokeStyle = "#444";
+					dc.strokeRect(x, y, this.size, this.size);
+					if (this.figure)
+						this.figure.Draw(x, y);
+				}
+			}
+
+			class Piece
+			{
+				constructor(name)
+				{
+					this.name = name;
+					this.clr = this.name.slice(-1);
+					this.img = new Image();
+					this.img.src = "../images/" + name + ".gif";
+					this.wasMoved = false;
+				}
+				CanMoveTo(x, y)
+				{
+					if (x >= 0 && x < 8 && y >= 0 && y < 8)
+					{
+						let c = board.cells[x][y];
+						if (c.figure)
+							return c.figure.clr != this.clr;
+						else
+							return true;
+					}
+					return false;
+				}
+				CanBeat(x, y)
+				{
+					if (x >= 0 && x < 8 && y >= 0 && y < 8)
+					{
+						let c = board.cells[x][y];
+						if (c.figure)
+							return c.figure.clr != this.clr;
+					}
+					return false;
+				}
+				AddCell(moves, cell)
+				{
+					if (cell.figure)
+					{
+						if (cell.figure.clr != this.clr)
+							moves.push(cell);
+						return false;
+					}
+					moves.push(cell);
+					return true;
+				}
+				Moves8(p)
+				{
+					let
+						moves = [],
+						cells = board.cells;
+					for (let i = 0; i < p.length; i += 2)
+					{
+						if (this.CanMoveTo(p[i], p[i + 1]))
+							moves.push(cells[p[i]][p[i + 1]]);
+					}
+					return moves;
+				}
+				Draw(x, y)
+				{
+					if (!this.img)
+						return;
+					let sz = board.size / 8;
+					game.dc.drawImage(this.img, x, y, sz, sz);
+				}
+			}
+			class Pawn extends Piece
+			{
+				GetMoves(cell)
+				{
+					let
+						cells = board.cells,
+						moves = [],
+						x = cell.x, y = cell.y,
+						d = this.clr == 'B' ? 1 : -1; // advance delta
+					if (!this.wasMoved)
+					{
+						let
+							y1 = y + d,
+							y2 = y1 + d;
+						if (!cells[x][y1].figure && !cells[x][y2].figure)
+							moves.push(cells[x][y2]);
+					}
+					let
+						j = y + d,
+						onBoard = j >= 0 && j < 8;
+					if (onBoard)
+					{
+						let c = cells[x][j];
+						if (!c.figure)
+							moves.push(c);
+					}
+					let i = x - 1;
+					if (x - 1 >= 0 && onBoard && this.CanBeat(i, j))
+						moves.push(cells[i][j]);
+					i = x + 1;
+					if (x + 1 < 8 && onBoard && this.CanBeat(i, j))
+						moves.push(cells[i][j]);
+					return moves;
+				}
+			}
+			class Knight extends Piece
+			{
+				constructor(clr) { super("N" + clr); }
+				GetMoves(cell)
+				{
+					let
+						x = cell.x, y = cell.y,
+						x1 = x - 1, x2 = x - 2, x3 = x + 1, x4 = x + 2,
+						y1 = y - 1, y2 = y - 2, y3 = y + 1, y4 = y + 2;
+					return this.Moves8([x4, y3, x4, y1, x2, y3, x2, y1, x3, y4, x3, y2, x1, y4, x1, y2]);
+				}
+			}
+			class Bishop extends Piece
+			{
+				constructor(clr) { super("B" + clr); }
+				GetMoves(cell)
+				{
+					let
+						moves = [],
+						cells = board.cells,
+						x = cell.x, y = cell.y,
+						i, j;
+					for (let d = 1; (i = x + d) < 8 && (j = y + d) < 8; d++)
+					{
+						if (!this.AddCell(moves, cells[i][j]))
+							break;
+					}
+					for (let d = 1; (i = x + d) < 8 && (j = y - d) >= 0; d++)
+					{
+						if (!this.AddCell(moves, cells[i][j]))
+							break;
+					}
+
+					for (let d = 1; (i = x - d) >= 0 && (j = y + d) < 8; d++)
+					{
+						if (!this.AddCell(moves, cells[i][j]))
+							break;
+					}
+
+					for (let d = 1; (i = x - d) >= 0 && (j = y - d) >= 0; d++)
+					{
+						if (!this.AddCell(moves, cells[i][j]))
+							break;
+					}
+					return moves;
+				}
+			}
+			class Rook extends Piece
+			{
+				constructor(clr) { super("R" + clr); }
+				GetMoves(cell)
+				{
+					let
+						moves = [],
+						cells = board.cells,
+						x = cell.x, y = cell.y,
+						i, j;
+					for (j = y + 1; j < 8; j++)
+					{
+						if (!this.AddCell(moves, cells[x][j]))
+							break;
+					}
+					for (j = y - 1; j >= 0; j--)
+					{
+						if (!this.AddCell(moves, cells[x][j]))
+							break;
+					}
+					for (i = x + 1; i < 8; i++)
+					{
+						if (!this.AddCell(moves, cells[i][y]))
+							break;
+					}
+					for (i = x - 1; i >= 0; i--)
+					{
+						if (!this.AddCell(moves, cells[i][y]))
+							break;
+					}
+					return moves;
+				}
+			}
+			class Queen extends Piece
+			{
+				constructor(clr) { super("Q" + clr); }
+				GetMoves(cell)
+				{
+					return [].concat(Rook.prototype.GetMoves.call(this, cell), Bish-op.prototype.GetMoves.call(this, cell));
+				}
+			}
+			class King extends Piece
+			{
+				constructor(clr) { super("K" + clr); }
+				GetMoves(cell)
+				{
+					let
+						x = cell.x, y = cell.y,
+						xm = x - 1, xp = x + 1,
+						ym = y - 1, yp = y + 1;
+					return this.Moves8([xp, ym, xp, y, xp, yp, x, yp, xm, yp, xm, y, xm, ym, x, ym]);
+				}
+			}
+
+			class Board
+			{
+				constructor()
+				{
+					this.size = 400;
+					this.pad = 20; // for board markup
+					this.clrW = "#ffe";
+					this.clrB = "#da6";
+					this.clrS = "#f99";
+					this.clrM = "#cfc";
+					this.font = '18px Arial';
+					this.cells = null;
+					this.cellActive = null;
+					this.moves = [];
+					this.lastTurn = 'B';
+				}
+				CreateCells()
+				{
+					this.cells = [];
+					for (let i = 0; i < 8; i++)
+					{
+						this.cells[i] = [];
+						for (let j = 0; j < 8; j++)
+						{
+							let clr = ((i + j) % 2 == 0 ? this.clrB : this.clrW);
+							this.cells[i][j] = new Cell(i, j, this.size / 8, clr, this);
+						}
+					}
+				}
+				Draw(dc)
+				{
+					let
+						a = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'],
+						y = this.size + this.pad,
+						dx = 2 * this.pad,
+						dy = 1.5 * this.pad,
+						d = this.size / 8,
+						i;
+					dc.font = this.font;
+					dc.fillStyle = "#000";
+					for (i = 0; i < 8; i++)
+						dc.fillText(a[i], i * d + dx, y);
+					for (i = 0; i < 8; i++)
+						dc.fillText(8 - i, 0, i * d + dy);
+					for (i = 0; i < 8; i++)
+					{
+						for (let j = 0; j < 8; j++)
+							this.cells[i][j].Draw(dc);
+					}
+				}
+				ClearSelection()
+				{
+					for (let i = 0; i < this.moves.length; i++)
+					{
+						let c = this.moves[i];
+						c.marked = false;
+						c.Draw(game.dc);
+					}
+					this.cellActive.selected = false;
+					this.cellActive.Draw(game.dc);
+					this.cellActive = null;
+				}
+				Clear()
+				{
+					for (let x = 0; x < 8; x++)
+						for (let y = 0; y < 8; y++)
+							this.cells[x][y].Clear();
+					this.lastTurn = 'B';
+				}
+				Select(cell)
+				{
+					if (this.cellActive)
+						this.ClearSelection();
+					let f = cell.figure;
+					if (f && f.clr != this.lastTurn)
+					{
+						this.moves = f.GetMoves(cell);
+						for (let i = 0; i < this.moves.length; i++)
+						{
+							let m = this.moves[i];
+							this.cells[m.x][m.y].Mark(game.dc);
+						}
+						cell.Select(game.dc);
+						this.cellActive = cell;
+					}
+				}
+				TryMoveTo(cell)
+				{
+					let f = this.cellActive.figure;
+					if (cell.marked && !cell.selected)
+					{
+						cell.figure = f;
+						f.wasMoved = true;
+						this.cellActive.figure = null;
+						this.ClearSelection();
+						this.lastTurn = f.name.slice(-1);
+						return true;
+					}
+					return false;
+				}
+				Add(f, x, y) { this.cells[x - 1][y - 1].figure = f; }
+			}
+
+			class Game
+			{
+				constructor(user)
+				{
+					let size = board.size + board.pad;
+					this.sz = board.size / 8;
+					this.canvas = $("canvas", 0, `width=${size};height=${size}`);
+					this.dc = this.canvas.getContext("2d");
+					this.user = user;
+					this.gameId = 0;
+					this.state = 0;
+					this.user1 = 0;
+					this.user2 = 0;
+					this.moves = [];
+					this.games = [];
+					this.moves_orig = null;
+					this.mouseDown = false;
+					this.posX = 0;
+					this.posY = 0;
+					board.CreateCells();
+					this.InitFigures('W', 'bottom');
+					this.InitFigures('B', 'top');
+					setTimeout(() => this.Draw(), 400);
+					this.canvas.onmousedown = (e) => this.OnMouseDown(e);
+				}
+				InitFigures(clr, position)
+				{
+					let
+						y1 = (position == 'bottom' ? 8 : 1),
+						y2 = (position == 'bottom' ? 7 : 2);
+					for (let i = 1; i < 9; i++)
+						board.Add(new Pawn(clr), i, y2);
+					board.Add(new Rook(clr), 1, y1);
+					board.Add(new Knight(clr), 2, y1);
+					board.Add(new Bishop(clr), 3, y1);
+					board.Add(new Queen(clr), 4, y1);
+					board.Add(new King(clr), 5, y1);
+					board.Add(new Bishop(clr), 6, y1);
+					board.Add(new Knight(clr), 7, y1);
+					board.Add(new Rook(clr), 8, y1);
+				}
+				NewGame(color)
+				{
+					this.gameId = 0;
+					this.state = 0;
+					this.moves = [];
+					board.lastTurn = color == 'W' ? 'B' : 'W';
+					board.Clear();
+					board.ClearSelection();
+
+					if (color == 'W')
+					{
+						this.InitFigures('W', 'bottom');
+						this.InitFigures('B', 'top');
+					}
+					else
+					{
+						this.InitFigures('W', 'top');
+						this.InitFigures('B', 'bottom');
+					}
+					this.Draw();
+				}
+				LoadGame(gameId, moves)
+				{
+					let g, i;
+					for (i = 0; i < this.games.length; i++)
+					{
+						g = this.games[i];
+						if (g.Id == gameId)
+							break;
+					}
+					let color = g.User1Id == this.user ? 1 : 2;
+					this.newGame(color);
+					this.gameId = gameId;
+					this.state = g.State;
+					this.user1 = g.User1Id;
+					this.user2 = g.User2Id;
+					for (i = 0; i < moves.length; i++)
+					{
+						let
+							m = moves[i],
+							data = m.Data.split(' '),
+							x1 = parseInt(data[0]),
+							y1 = parseInt(data[1]),
+							x2 = parseInt(data[2]),
+							y2 = parseInt(data[3]);
+						board.Select(x1, y1);
+						this.Move(x2, y2);
+					}
+				}
+				Resign()
+				{
+					this.state = board.lastTurn;
+					this.Draw();
+				}
+				OnMouseDown(e)
+				{
+					e.preventDefault();
+					let
+						i = Math.floor((e.x - e.target.offsetLeft - board.pad) / this.sz),
+						j = Math.floor((e.y - e.target.offsetTop) / this.sz),
+						cell = board.cells[i][j],
+						a = board.cellActive;
+					if (a)
+					{
+						let m = { figure: a.figure.name, src: a.x + ' ' + a.y, dst: cell.x + ' ' + cell.y };
+						if (board.TryMoveTo(cell))
+						{
+							this.moves.push(m);
+							return;
+						}
+					}
+					board.Select(cell);
+				}
+
+				Draw()
+				{
+					let dc = this.dc;
+					dc.clearRect(0, 0, this.canvas.width, this.canvas.height);
+					board.Draw(dc);
+					let c = board.cellActive;
+					if (this.mouseDown && c)
+					{
+						if (c.figure)
+							c.figure.Draw(dc);
+					}
+				}
+				GoToStart() { while (this.MoveBack()); }
+				GoToEnd() { while (this.MoveFwd()); }
+				MoveBack()
+				{
+					if (!this.moves_orig)
+						this.moves_orig = this.moves.slice();
+					let end = this.moves.length - 1;
+					if (end < 0)
+						return false;
+					let tmp = [];
+					for (let i = 0; i < end; i++)
+						tmp.push(this.moves_orig[i]);
+					this.LoadGame(this.gameId, tmp);
+					return true;
+				}
+				MoveFwd()
+				{
+					let index = this.moves.length;
+					if (this.moves_orig && this.moves_orig.length > index)
+					{
+						let
+							gameId = this.gameId,
+							tmp = [];
+						for (let i = 0; i < index + 1; i++)
+							tmp.push(this.moves_orig[i]);
+						this.LoadGame(gameId, tmp);
+						return true;
+					}
+					return false;
+				}
+			}
+
+			let
+				board = null,
+				game = null;
+			onload = () =>
+			{
+				board = new Board();
+				game = new Game(0);
+			}
+		})();
+	</script>
+</head>
+<body>
+</body>
+</html>

@@ -1,0 +1,181 @@
+﻿<html>
+<head>
+	<title>ToolbarDyn</title>
+	<link rel="icon" type="image/png" href="../images/favicon.png" />
+	<style>
+		body {
+			font-family: Trebuchet MS, Arial,Helvetica,sans-serif;
+			font-size: 80%;
+			padding: 0px 10px;
+		}
+
+		img {
+			margin: 4px;
+			border: 1px solid #afa;
+			border-radius: 6px;
+		}
+
+		.toolbar {
+			height: 3.2em;
+			border: 2px solid #999;
+			border-radius: 10px;
+			box-shadow: inset -2px -2px 3px #000;
+			margin: 3px;
+			overflow: hidden;
+			padding-left: 8px;
+		}
+
+		.button {
+			border: 0;
+			border-radius: 8px;
+			color: white;
+			padding: 8px 16px;
+			text-align: center;
+			background: #3a3;
+			transition-duration: 0.4s;
+			box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24),0 17px 50px 0 rgba(0,0,0,0.19);
+			text-decoration: none;
+			display: inline-block;
+			font-size: 1.1em;
+			margin: 4px 4px;
+			cursor: pointer;
+		}
+
+			.button:hover {
+				opacity: 0.8;
+				transform: scale(0.9);
+			}
+
+		.active {
+			border: 1px solid #f44;
+			box-shadow: none;
+			transform: scale(0.9);
+			margin: 5px 3px;
+		}
+
+		.normal {
+			border: 1px solid #aaa;
+			box-shadow: inset -2px -2px 3px #999;
+			margin: 5px 3px;
+		}
+
+			.normal:hover {
+				transform: scale(1.25);
+			}
+
+		.msg {
+			color: green;
+			margin: 4px;
+			font-size: 1.2em;
+		}
+
+		.disabled {
+			border: 1px solid #999;
+			box-shadow: none;
+			opacity: 0.4;
+		}
+
+			.disabled:hover {
+				transform: scale(1);
+			}
+	</style>
+	<script src="../js/Kit.js"></script>
+	<script>
+	class Button
+	{
+		constructor(title, toolbar)
+		{
+			this.title = title;
+			this.toolbar = toolbar;
+			this.img = $("img", 0, `src=../images/${title}.gif;title=${title};className=normal;`, toolbar.div);
+			this.img.onclick = () => this.Toggle();
+			this.img.oncontextmenu = (e) => this.Enable(e);
+		}
+		Toggle()
+		{
+			if (this.enabled)
+			{
+				this.active = !this.active;
+				this.toolbar.OnClicked();
+			}
+		}
+		Enable(e)
+		{
+			e.preventDefault();
+			this.enabled = !this.enabled;
+		}
+
+	}
+
+	Object.defineProperties(Button.prototype,
+	{
+		enabled:
+		{
+			get: function () { return !this.img.classList.contains("disabled"); },
+			set: function (v)
+			{
+				v ? this.img.classList.remove("disabled") : this.img.classList.add("disabled");
+			}
+		},
+		active:
+		{
+			get: function () { return this.img.classList.contains("active"); },
+			set: function (v)
+			{
+				v ? this.img.className = "active" : this.img.className = "normal";
+			}
+		},
+	});
+
+	class Toolbar
+	{
+		constructor()
+		{
+			this.items = [];
+			this.curId = -1;
+			this.div = $("div", 0, "className=toolbar;");
+			var
+				btnAdd = $("input", 0, "type=button;value=Add;className=button;"),
+				btnRem = $("input", "background=#f33;", "type=button;value=Remove;className=button;");
+			this.msg = $("div");
+			btnAdd.onclick = () => this.Add();
+			btnRem.onclick = () => this.Remove();
+		}
+		Add()
+		{
+			var titles = ["Cut", "Copy", "Paste", "Color", "Underline", "Bold", "VerticalText"];
+			this.curId = (this.curId + 1) % titles.length;
+			this.items.push(new Button(titles[this.curId], this));
+		}
+		Remove()
+		{
+			var last = this.items.length - 1;
+			if (last >= 0)
+			{
+				var item = this.items[last];
+				this.items.splice(last, 1);
+				this.div.removeChild(item.img);
+				item = null;
+				this.curId = last;
+				this.OnClicked();
+			}
+		}
+		OnClicked()
+		{
+			let s = "";
+			for (let i = 0; i < this.items.length; i++)
+			{
+				let btn = this.items[i];
+				if (btn.active)
+					s += btn.title + " ";
+			}
+			this.msg.innerText = s;
+		}
+	}
+
+	onload = () => new Toolbar();
+	</script>
+</head>
+<body>
+</body>
+</html>
